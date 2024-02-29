@@ -9,9 +9,11 @@ from skimage.transform import warp_polar
 from scipy.optimize import curve_fit
 from scipy.ndimage import binary_erosion, binary_closing, center_of_mass
 
+
 def fun(x, a, b, xc, yc):  # pylint:disable=C0103
-    """ 2D-map analytical function used for the fit """
+    """ 2D-map analytical function (power law) used for the fit """
     return a * ((x[0] - xc) ** 2 + (x[1] - yc) ** 2) ** b
+
 
 def jac(x, a, b, xc, yc):  # pylint:disable=C0103
     """ 2D-map analytical Jacobian function used for the fit """
@@ -19,13 +21,15 @@ def jac(x, a, b, xc, yc):  # pylint:disable=C0103
 
     df_da = squared_distance ** b
     df_db = a * df_da * np.log(squared_distance)
-    df_dxc = -2 * a * b * (x[0] - xc) * (squared_distance) ** (b - 1)
-    df_dyc = -2 * a * b * (x[1] - yc) * (squared_distance) ** (b - 1)
+    df_dxc = -2 * a * b * (x[0] - xc) * squared_distance ** (b - 1)
+    df_dyc = -2 * a * b * (x[1] - yc) * squared_distance ** (b - 1)
 
     return np.array([df_da, df_db, df_dxc, df_dyc]).T
 
+
 class Model:
     """ Model class for the UED centering application """
+
     def __init__(self, controller=None):
         self.controller = controller
         self.img = None
@@ -33,34 +37,39 @@ class Model:
         self.img_pol = None
         self.img_pol_masked = None
         self.img_pol_bkg = None
-        self.prfl = None
-        self.prfl_bkg = None
-        self.prfl_flattened = None
+        self.prof = None
+        self.prof_bkg = None
+        self.prof_flattened = None
         self.mask = None
         self.mask_min = None
         self.vmin = None
         self.vmax = None
+        self.pixel_size_init = None
         self.img_src = ColumnDataSource(data={"image": [np.zeros((1, 1))],
-                                                   "dw": [10],
-                                                   "dh": [10]})
-        self.dot_src = ColumnDataSource(data={"x":[0],
-                                                 "y":[0],
-                                                 "listener_added":[False]}) 
+                                              "dw": [10],
+                                              "dh": [10]})
+        self.dot_src = ColumnDataSource(data={"x": [0],
+                                              "y": [0],
+                                              "listener_added": [False]})
 
     def load_img(self, img):
         """Load the image from the selected file"""
         # get extension
         ext = img.suffix
 
-        if ext == ".dm3" or ext == ".dm4":
+        if ext in [".dm3", ".dm4"]:
             dm = DM3(img)
             loaded_image = dm.imagedata.astype(float)
             self.pixel_size_init = dm.pxsize[0]
         elif ext == ".tif":
             loaded_image = imread(img).astype(float)
         else:
-            self.controller.error("Unsupported file format. Please use .dm(3-4) or .tif files.")
-            raise ValueError("Unsupported file format. Please use .dm(3-4) or .tif files.")
+            self.controller.error(
+                "Unsupported file format. Please use .dm(3-4) or .tif files."
+            )
+            raise ValueError(
+                "Unsupported file format. Please use .dm(3-4) or .tif files."
+            )
 
         self.controller.error(visible=False)
         self.img = loaded_image
@@ -76,9 +85,12 @@ class Model:
         Calculate the 2D background estimation
         """
         coords = np.mgrid[0:self.img.shape[0], 0:self.img.shape[1]]
-        self.img_bkg = fun(coords, *popt) * pow(step, -2*popt[1])
 
-    def mask_eval(self, img, quantile_min=0.05, quantile_max=0.95):
+        # The function is estimated in the reduced domain.
+        # step**(-2 * popt[1]) is used to pass from reduced to the full domain
+        self.img_bkg = fun(coords, *popt) * pow(step, -2 * popt[1])
+
+    def mask_eval(self, img, quantile_min=0.10, quantile_max=0.95):
         """
         Mask evaluation based on quantile imgay 'img' partition
 
@@ -146,16 +158,16 @@ class Model:
         coords = [coords[0][mask], coords[1][mask]]
         popt = curve_fit(curve_fit_fun, coords, img[mask], p0=guess0,
                          jac=curve_fit_jac, bounds=bounds)[0]
-        
+
         # parameters in the full real space
         popt = (popt[0], popt[1], popt[2] * step, popt[3] * step)
         center = (popt[3], popt[2])
 
-        # Additonal step to calculate the 2D background estimation
+        # Additional step to calculate the 2D background estimation
         self.bkg_estimation_2d(popt, step)
 
         return center, masked_img
-    
+
     def set_pol_imgs(self, img, img_masked, img_bkg_masked, center):
         """
         Set the polar images and their profiles in the model
@@ -169,6 +181,6 @@ class Model:
         self.img_pol_masked = img_pol_masked
         self.img_pol_bkg = img_pol_bkg
 
-        self.prfl = np.nansum(img_pol_masked, axis=0)
-        self.prfl_bkg = np.nansum(img_pol_bkg, axis=0)
-        self.prfl_flattened = np.clip(self.prfl-self.prfl_bkg,0,None)
+        self.prof = np.nansum(img_pol_masked, axis=0)
+        self.prof_bkg = np.nansum(img_pol_bkg, axis=0)
+        self.prof_flattened = np.clip(self.prof - self.prof_bkg, 0, None)

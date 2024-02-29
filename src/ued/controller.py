@@ -8,8 +8,10 @@ import panel as pn
 from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from bokeh.io import curdoc
 
+
 class Controller:
     """ Controller class for the UED centering app """
+
     def __init__(self, model, view):
         self.model = model
         self.view = view
@@ -34,10 +36,10 @@ class Controller:
             self.model.img_pol_masked,
             self.model.img_pol_bkg,
         )
-    
+
     def get_profiles(self):
         """ Get the profiles from the model """
-        return self.model.prfl, self.model.prfl_bkg, self.model.prfl_flattened
+        return self.model.prof, self.model.prof_bkg, self.model.prof_flattened
 
     def get_dot_src(self):
         """ Get the red dot source from the model """
@@ -62,7 +64,8 @@ class Controller:
         """
         self.model.set_pol_imgs(img, img_masked, img_bkg_masked, center)
 
-    def dot_moved(self, attr, old, new):
+    def dot_moved(self,
+                  attr, old, new):  # pylint: disable=W0613(unused-argument)
         """Update the polar plot when the red dot is moved"""
         # If a callback is already scheduled, remove it
         if self.callback_id is not None:
@@ -70,7 +73,7 @@ class Controller:
 
         # Schedule a new callback with 200 ms delay
         self.callback_id = curdoc().add_timeout_callback(
-            self.view.plot_polar,200)
+            self.view.plot_polar, 200)
 
     def toggle_mask(self):
         """
@@ -86,14 +89,14 @@ class Controller:
             # Update the masked image source
             masked_img = np.where(mask, img, np.nan)
             img_src.data.update(image=[masked_img], dh=[img.shape[0]],
-                                           dw=[img.shape[1]])
+                                dw=[img.shape[1]])
         else:
             img_src.data.update(image=[img], dh=[img.shape[0]],
-                                           dw=[img.shape[1]])
+                                dw=[img.shape[1]])
 
     def export_plot(self):
         """ Export the polar plot as a PNG image """
-        view = self.view # for shorter code
+        view = self.view  # for shorter code
 
         # Convert the plot to a PNG image
         canvas = FigureCanvas(view.fig)
@@ -101,35 +104,35 @@ class Controller:
         canvas.print_png(png_output)
 
         # Save the PNG image to a temporary file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as f:
-            f.write(png_output.getvalue())
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as fid:
+            fid.write(png_output.getvalue())
 
         view.download.filename = "plot.png"
-        view.download.file = open(f.name, 'rb')
+        view.download.file = open(fid.name, 'rb')
 
         view.download._clicks += 1
 
     def export_profile(self):
         """ Export the axial sum profile as a TXT file """
-        view = self.view # for shorter code
+        view = self.view  # for shorter code
 
-        x = np.arange(view.prfl.shape[0])
+        x = np.arange(view.prof.shape[0])
         factor = view.pixel_size_input.value
-        data = np.column_stack((x*factor, view.prfl))
+        data = np.column_stack((x * factor, view.prof))
 
         # save to a temp file using tempfile
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as f:
-            np.savetxt(f, data, fmt='%f', delimiter='\t', header='X\t\tY')
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as fid:
+            np.savetxt(fid, data, fmt='%f', delimiter='\t', header='X\t\tY')
 
-        view.download_txt.file = f.name
+        view.download_txt.file = fid.name
         view.download_txt.filename = "profile.txt"
 
         # Trigger the download
         view.download_txt._clicks += 1
 
-    def update_colormap(self, event):
+    def update_colormap(self, _):
         """Update the colormap of all the plots"""
-        view = self.view # for shorter code
+        view = self.view  # for shorter code
 
         view.mpl_cmap = view.cmap[view.cmap_choice.value]
 
@@ -142,7 +145,7 @@ class Controller:
 
     def toggle_lines_and_circles(self):
         """Show or hide the lines & circles of interest on the polar plot"""
-        view = self.view # for shorter code
+        view = self.view  # for shorter code
         visible = view.sh_x_val.value
 
         for i in range(2, len(view.plot.renderers)):
@@ -151,11 +154,11 @@ class Controller:
             line.set_visible(visible)
 
         # Update the Matplotlib pane
-        view.polar_plot.param.trigger("object") 
+        view.polar_plot.param.trigger("object")
 
     def apply_x_offset(self):
         """Apply the x-offset to the polar plot by setting the x-axis limits"""
-        view = self.view # for shorter code
+        view = self.view  # for shorter code
 
         # Set the x-axis limits & Update the Matplotlib pane
         view.ax.set_xlim([view.x_offset_slider.value, None])
@@ -163,14 +166,14 @@ class Controller:
 
     def apply_px_size(self, init=False):
         """Apply the pixel size to the polar plot by setting the x-axis ticks"""
-        view = self.view # for shorter code
+        view = self.view  # for shorter code
 
         if init:
             view.pixel_size_input.value = self.model.pixel_size_init
             return
 
-        factor = view.pixel_size_input.value # Get the pixel size factor
-        x_ticks = view.ax.get_xticks() # Get current x and y ticks
+        factor = view.pixel_size_input.value  # Get the pixel size factor
+        x_ticks = view.ax.get_xticks()  # Get current x and y ticks
 
         # TODO Fix warning, this adds a wider blank border to the plot
         # view.ax.set_xticks(x_ticks)
@@ -191,7 +194,7 @@ class Controller:
         vmin, vmax = self.model.compute_brightness(view.brightness_slider.value)
         view.update_color_mapper(vmin, vmax)
 
-        if hasattr(view, 'polar_imshow'):
+        if view.polar_imshow != None:
             view.polar_imshow.set_clim(vmax=vmax)
             view.polar_plot.param.trigger("object")
 
@@ -200,7 +203,7 @@ class Controller:
         Start the centering process by loading the selected image and setting
         the red dot position.
         """
-        model = self.model # for shorter code
+        model = self.model  # for shorter code
         view = self.view
         view.progress.visible = True
 
@@ -208,7 +211,7 @@ class Controller:
         file_path = view.file_browser.get_selection_path()
         model.load_img(file_path)
 
-        img=model.img
+        img = model.img
         # Update the brightness
         self.update_brightness()
 

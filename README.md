@@ -1,19 +1,34 @@
 
-**UED Centering**
+<!-- <p align="center">
+  <img src="https://raw.githubusercontent.com/CEA-MetroCarac/ued_centering/master/images/logo.png" alt="logo">
+</p> -->
 
+**UED Centering** is a web app for Ultrafast Electron Diffraction (UED) image analysis. It can automatically find the center of the diffraction pattern and display the polar representation of the data. The app also allows the user to manually adjust the center and to export the data. The app runs a [Panel](https://panel.holoviz.org/) server.
 
-<!-- ## Installation
+![app](https://raw.githubusercontent.com/CEA-MetroCarac/ued_centering/master/images/app.png)
+
+## Installation
+
+To install and run the app, use the following commands:
+
 ```bash
-git clone
-``` -->
-
-<!-- ## Requirements -->
-
-## Quick start
-Launch the application:
+git clone https://github.com/CEA-MetroCarac/ued_centering.git
+cd ued_centering/src/ued
+python ./app.py
 ```
-ued
-```
+
+## Requirements
+
+<!-- matplotlib
+    bokeh (auto installed with panel)
+    panel
+    numpy
+    scikit-image
+    scipy
+    (optionnal: only for loading tif) tifffile
+    pandas -->
+
+## Interface
 
 Here is a brief description of the fields and components of the interface:
 

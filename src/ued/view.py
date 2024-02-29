@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 from bokeh import events
 from bokeh.plotting import figure
-from bokeh.models import (Div,CustomJS,Button,
+from bokeh.models import (Div, CustomJS, Button,
                           LinearColorMapper,
                           DataRange1d,
                           WheelZoomTool,
@@ -14,11 +14,14 @@ from bokeh.models import (Div,CustomJS,Button,
 
 from file_browser import FileBrowser
 
+
 class View:
     """ View class for the UED Centering App """
+
     def __init__(self, controller):
         self.controller = controller
         self.lines = []
+        self.original_ylim = None
         self.title = pn.pane.Markdown(
             "<div style='text-align: center;'><h1>UED Centering App</h1></div>",
             width=500)
@@ -39,7 +42,7 @@ class View:
         # Getting all ColumnDataSources from model via controller
         img_src = controller.get_img_src()
         dot_src = controller.get_dot_src()
-        
+
         # Create a new plot for the src image
         self.plot = figure(x_range=DataRange1d(range_padding=0),
                            y_range=DataRange1d(range_padding=0),
@@ -54,6 +57,7 @@ class View:
         self.ax2.get_yaxis().set_visible(False)
 
         self.polar_plot = pn.pane.Matplotlib(self.fig, tight=True)
+        self.polar_imshow = None
 
         # Define your color mapper, with the range of colors you want to use
         self.color_mapper = LinearColorMapper(palette="Inferno256",
@@ -62,26 +66,26 @@ class View:
 
         # Render Image and Red dot
         img_glyph = self.plot.image(x=0,
-                        y=0,
-                        dw="dw",
-                        dh="dh",
-                        source=img_src,
-                        color_mapper=self.color_mapper)
+                                    y=0,
+                                    dw="dw",
+                                    dh="dh",
+                                    source=img_src,
+                                    color_mapper=self.color_mapper)
 
         self.plot.dot(x="x",
                       y="y",
                       size=40,
                       color="red",
                       source=dot_src)
-        
+
         # Add a hover tool to display x,y and pixel value
         hover = HoverTool(tooltips=[
             ("x", "$x"),
             ("y", "$y"),
             ("value", "@image"),
-            ], renderers=[img_glyph])
+        ], renderers=[img_glyph])
         self.plot.add_tools(hover)
-        
+
         # Div to display the coordinates of the red dot
         self.coordinates_div = Div()
 
@@ -105,9 +109,9 @@ if (cb_obj.x >= 0 && cb_obj.x <= x && cb_obj.y >= 0 && cb_obj.y <= y) {
                 """))
 
         self.btn_callback = CustomJS(
-            args={"source":dot_src,
-                  "div":self.coordinates_div
-            },
+            args={"source": dot_src,
+                  "div": self.coordinates_div
+                  },
             code="""
 let mousePos = { x: 0, y: 0 };
 let inRightThird = false; // flag to check if mouse is in the right third of the screen
@@ -146,12 +150,13 @@ if (!(source.data['listener_added'][0])) {
 
         # Used to specify vertical lines of interest on the polar plot
         # TODO use Multichoice when issue #5047 is completed
+        # https://github.com/holoviz/panel/issues/5047
         self.x_values = pn.widgets.TextInput(
             name="X Points of interest (confirm with enter)",
             value="5,10")
         self.x_values.param.watch(
             lambda event: self.draw_lines_circles(), "value")
-        
+
         self.x_offset_slider = pn.widgets.IntSlider(
             name="X Offset",
             start=0,
@@ -160,7 +165,7 @@ if (!(source.data['listener_added'][0])) {
             step=5)
         self.x_offset_slider.param.watch(
             lambda event: controller.apply_x_offset(), "value")
-        
+
         self.pixel_size_input = pn.widgets.FloatInput(
             name="Pixel Size Factor",
             start=0,
@@ -170,28 +175,28 @@ if (!(source.data['listener_added'][0])) {
             width=100)
         self.pixel_size_input.param.watch(
             lambda event: controller.apply_px_size(), "value")
-        
+
         # TODO replace with matplotlib interactive=True when fixed
-        # Issue #41 on ipywidgets_bokeh roadmap since 04/2023
+        # https://github.com/bokeh/ipywidgets_bokeh/issues/41
         self.export_png = Button(
             label="Export to PNG", button_type="primary")
         self.export_png.on_click(controller.export_plot)
         self.download = pn.widgets.FileDownload(visible=False)
-        
+
         self.export_txt = Button(
             label="Export to TXT", button_type="primary")
         self.export_txt.on_click(controller.export_profile)
         self.download_txt = pn.widgets.FileDownload(visible=False)
-        
+
         self.cmap_choice = pn.widgets.Select(
-        options=['Inferno256', 'Greys256', 'Cividis256', 'Viridis256',
-                 'Plasma256'],
-        name='Colormap:')
+            options=['Inferno256', 'Greys256', 'Cividis256', 'Viridis256',
+                     'Plasma256'],
+            name='Colormap:')
         self.cmap_choice.param.watch(controller.update_colormap, "value")
 
         self.cmap = {"Inferno256": "inferno", "Greys256": "gray",
-                "Cividis256": "cividis", "Viridis256": "viridis",
-                "Plasma256": "plasma"}
+                     "Cividis256": "cividis", "Viridis256": "viridis",
+                     "Plasma256": "plasma"}
         self.mpl_cmap = self.cmap[self.cmap_choice.value]
 
         # add checkbox
@@ -213,8 +218,8 @@ if (!(source.data['listener_added'][0])) {
         self.quantile_slider.param.watch(lambda event: controller.start(
             quantile_min=self.quantile_slider.value[0],
             quantile_max=self.quantile_slider.value[1]),
-            "value")
-        
+                                         "value")
+
         self.progress = pn.indicators.Progress(name='Progress', width=200,
                                                visible=False)
 
@@ -240,29 +245,28 @@ if (!(source.data['listener_added'][0])) {
         img_pol = self.controller.get_pol_imgs()[0]
 
         # Get the profiles from the model
-        prfl, prfl_bkg, prfl_flattened = self.controller.get_profiles()
+        prof, prof_bkg, prof_flattened = self.controller.get_profiles()
 
         self.ax.clear()
         self.ax2.clear()
 
         self.draw_lines_circles()
-        
-        self.polar_imshow = self.ax.imshow(
-            img_pol,
-            vmin=0,
-            vmax=self.controller.get_vmax(),
-            cmap=self.mpl_cmap)
+
+        self.polar_imshow = self.ax.imshow(img_pol,
+                                           vmin=0,
+                                           vmax=self.controller.get_vmax(),
+                                           cmap=self.mpl_cmap)
         self.ax.set_aspect('auto')
         self.ax.margins(x=0, y=0)
-        
+
         # alt x-axis to plot the profiles so they match the polar image width
         # as they were calculated on downsampled image
-        x = np.linspace(0, img_pol.shape[1], len(prfl))
+        x = np.linspace(0, img_pol.shape[1], len(prof))
 
         # Then plot with the new x-axis
-        self.ax2.plot(x, prfl, visible=False)
-        self.ax2.plot(x, prfl_bkg, color='b', visible=False)
-        self.ax2.plot(x, prfl_flattened, color='green', visible=False)
+        self.ax2.plot(x, prof, visible=False)
+        self.ax2.plot(x, prof_bkg, color='b', visible=False)
+        self.ax2.plot(x, prof_flattened, color='green', visible=False)
 
         # Set the x-axis limits
         self.controller.apply_x_offset()
@@ -275,13 +279,13 @@ if (!(source.data['listener_added'][0])) {
         Show or hide the extra profiles (axial sum & bkg) on the polar plot
         """
         # Get flate
-        _, _, prfl_flattened = self.controller.get_profiles()
+        _, _, prof_flattened = self.controller.get_profiles()
 
         # Scale the y-axis to the profile if the extra profiles are hidden
         if not self.show_extra_profiles.value:
             self.original_ylim = self.ax2.get_ylim()
             self.ax2.set_ylim([
-                min(prfl_flattened), max(prfl_flattened)])
+                min(prof_flattened), max(prof_flattened)])
         else:
             self.ax2.set_ylim(self.original_ylim)
 
@@ -300,7 +304,6 @@ if (!(source.data['listener_added'][0])) {
         whenever the red dot is moved or the x_values are updated.
         """
         img = self.controller.get_img()
-        
 
         # Show the progress bar
         self.progress.visible = True
@@ -316,17 +319,17 @@ if (!(source.data['listener_added'][0])) {
 
         # Create the polar warp of the image
         mask_min_only = self.controller.get_mask_min()
-        
+
         # Copy of the image and the background to apply the mask
         img_masked = img.copy()
         img_bkg_masked = self.controller.get_img_bkg().copy()
 
-        img_masked[mask_min_only] = np.nan # TODO this souldnt be in the view
+        img_masked[mask_min_only] = np.nan  # TODO this shouldn't be in the view
         img_bkg_masked[mask_min_only] = np.nan
-        
-        # Set the polar images in the model 
-        self.controller.update_pol_imgs(img, img_masked, img_bkg_masked, (y,x))
-        
+
+        # Set the polar images in the model
+        self.controller.update_pol_imgs(img, img_masked, img_bkg_masked, (y, x))
+
         self.render_polar_and_profiles()
         self.show_all_profiles()
 
@@ -345,23 +348,27 @@ if (!(source.data['listener_added'][0])) {
             line = self.ax.axvline(x=x_val, color="r")
             self.lines.append(line)
 
-    def draw_circles(self, x_values): 
+    def draw_circles(self, x_values):
         """ Draw circles of interest on the polar plot """
         # save current number of renderers (image and red dot)
         len_renderers = len(self.plot.renderers)
         len_x_values = len(x_values)
         dot_src = self.controller.get_dot_src()
         center = (dot_src.data["x"][0], dot_src.data["y"][0])
-        
+
         # First, draw circles
-        for i,radius in enumerate(x_values):
-            i+=2 # Ignore the image and the center dot
+        for i, radius in enumerate(x_values):
+            i += 2  # Ignore the image and the center dot
             # If there is already a circle
             if i < len_renderers:
                 # update the circle with the new value
-                self.plot.renderers[i].glyph.x = center[0]  # pylint:disable=unsubscriptable-object
-                self.plot.renderers[i].glyph.y = center[1]   # pylint:disable=unsubscriptable-object
-                self.plot.renderers[i].glyph.radius = radius # pylint:disable=unsubscriptable-object
+                self.plot.renderers[i].glyph.x = center[
+                    0]  # pylint:disable=unsubscriptable-object
+                self.plot.renderers[i].glyph.y = center[
+                    1]  # pylint:disable=unsubscriptable-object
+                self.plot.renderers[
+                    i].glyph.radius = radius  #
+                # pylint:disable=unsubscriptable-object
             else:
                 # create a new circle
                 self.plot.circle(
@@ -372,19 +379,19 @@ if (!(source.data['listener_added'][0])) {
                     fill_alpha=0,
                     line_width=2,
                     source=dot_src)
-        
+
         # Removing unwanted circles
-        if len_renderers -2 > len_x_values:
-            for i in range(len_x_values, len_renderers-2):
+        if len_renderers - 2 > len_x_values:
+            for i in range(len_x_values, len_renderers - 2):
                 self.plot.renderers.pop()  # pylint:disable=E1101
-        
+
     def draw_lines_circles(self):
         """ Draw the lines and circles of interest on the plots """
         # Get the x-values from the text input
         x_values_string = self.x_values.value
         x_values_list = x_values_string.split(",")
         factor = self.pixel_size_input.value
-        x_values = [int(int(x_val.strip())/factor) for x_val in x_values_list]
+        x_values = [int(int(x_val.strip()) / factor) for x_val in x_values_list]
 
         # Add the circles and the vertical lines of interest
         self.draw_circles(x_values)
@@ -411,15 +418,18 @@ if (!(source.data['listener_added'][0])) {
             pn.Spacer(height=20),
             pn.Row(self.export_png, self.export_txt),
             self.cmap_choice,
-            pn.Row(self.x_values,self.sh_x_val, self.show_extra_profiles),
+            pn.Row(self.x_values, self.sh_x_val, self.show_extra_profiles),
             pn.Row(self.download, self.download_txt),
-            pn.Row(self.x_offset_slider,self.pixel_size_input),
+            pn.Row(self.x_offset_slider, self.pixel_size_input),
             sizing_mode="fixed")
-        
+
         self.center_panel = pn.Column(
-            pn.Row(self.brightness_slider,self.quantile_slider,self.mask_chkbox,
+            pn.Row(self.brightness_slider, self.quantile_slider,
+                   self.mask_chkbox,
                    align='center'),
             pn.Row(self.plot, align='center'),
             self.polar_plot)
-        
-        return pn.Column(self.alert, self.title, pn.Row(self.left_panel, self.center_panel))
+
+        return pn.Column(
+            self.alert, self.title, pn.Row(self.left_panel, self.center_panel)
+        )

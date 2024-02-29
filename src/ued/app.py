@@ -5,6 +5,7 @@ from model import Model
 from view import View
 from controller import Controller
 
+
 def main():
     """ Run the UED Centering App """
 
@@ -18,6 +19,7 @@ def main():
     controller.view = view
 
     controller.run()
+
 
 if __name__ == "__main__":
     main()
