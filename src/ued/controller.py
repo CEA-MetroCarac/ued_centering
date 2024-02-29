@@ -1,7 +1,7 @@
 """ Controller module for the UED centering app """
+import tempfile
 from io import BytesIO
 
-import tempfile
 import numpy as np
 import panel as pn
 
@@ -103,22 +103,22 @@ class Controller:
         png_output = BytesIO()
         canvas.print_png(png_output)
 
-        # Save the PNG image to a temporary file
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as fid:
-            fid.write(png_output.getvalue())
+        # Reset the pointer to the beginning of the BytesIO object
+        png_output.seek(0)
 
         view.download.filename = "plot.png"
-        view.download.file = open(fid.name, 'rb')
+        view.download.file = png_output
 
         view.download._clicks += 1
 
     def export_profile(self):
         """ Export the axial sum profile as a TXT file """
         view = self.view  # for shorter code
+        model = self.model
 
-        x = np.arange(view.prof.shape[0])
+        x = np.arange(model.prof.shape[0])
         factor = view.pixel_size_input.value
-        data = np.column_stack((x * factor, view.prof))
+        data = np.column_stack((x * factor, model.prof))
 
         # save to a temp file using tempfile
         with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as fid:
@@ -126,6 +126,8 @@ class Controller:
 
         view.download_txt.file = fid.name
         view.download_txt.filename = "profile.txt"
+
+        view.download_txt.file = fid.name
 
         # Trigger the download
         view.download_txt._clicks += 1

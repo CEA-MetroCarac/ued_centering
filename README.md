@@ -19,14 +19,13 @@ python ./app.py
 
 ## Requirements
 
-<!-- matplotlib
-    bokeh (auto installed with panel)
-    panel
-    numpy
-    scikit-image
-    scipy
-    (optionnal: only for loading tif) tifffile
-    pandas -->
+- `panel`
+- `numpy`
+- `matplotlib`
+- `scikit-image`
+- `scipy`
+- `pandas`
+- `tifffile` (optional: only for loading TIFF files)
 
 ## Interface
 
