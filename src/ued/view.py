@@ -185,7 +185,7 @@ if (!(source.data['listener_added'][0])) {
 
         self.export_txt = Button(
             label="Export to TXT", button_type="primary")
-        self.export_txt.on_click(controller.export_profile)
+        self.export_txt.on_click(controller.export_profiles)
         self.download_txt = pn.widgets.FileDownload(visible=False)
 
         self.cmap_choice = pn.widgets.Select(

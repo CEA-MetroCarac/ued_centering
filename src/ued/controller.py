@@ -51,7 +51,7 @@ class Controller:
     def get_vmax(self):
         """ Get the vmax value from the model """
         return self.model.vmax
-    
+
     def error(self, message='', visible=True):
         """ Show an error message in the view """
         self.view.alert.object = message
@@ -110,18 +110,27 @@ class Controller:
 
         view.download._clicks += 1
 
-    def export_profile(self):
+    def export_profiles(self):
         """ Export the axial sum profile as a TXT file """
         view = self.view  # for shorter code
         model = self.model
 
         x = np.arange(model.prof.shape[0])
         factor = view.pixel_size_input.value
-        data = np.column_stack((x * factor, model.prof))
+        data = np.column_stack(
+            (x * factor, model.prof, model.prof_bkg, model.prof_flattened)
+        )
 
         # save to a StringIO object
         txt_output = StringIO()
-        np.savetxt(txt_output, data, fmt='%f', delimiter='\t', header='X\t\tY')
+        np.savetxt(
+            txt_output,
+            data,
+            fmt="%f",
+            delimiter="\t",
+            header="X\t\tY\t\tY_bkg\t\tY_flattened",
+            comments="",
+        )
 
         # Reset the pointer to the beginning of the StringIO object
         txt_output.seek(0)
@@ -196,7 +205,7 @@ class Controller:
         vmin, vmax = self.model.compute_brightness(view.brightness_slider.value)
         view.update_color_mapper(vmin, vmax)
 
-        if view.polar_imshow != None:
+        if view.polar_imshow is not None:
             view.polar_imshow.set_clim(vmax=vmax)
             view.polar_plot.param.trigger("object")
 
