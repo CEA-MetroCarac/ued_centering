@@ -1,10 +1,7 @@
 """ Controller module for the UED centering app """
-from io import BytesIO, StringIO
-
+from io import StringIO
 import numpy as np
 import panel as pn
-
-from matplotlib.backends.backend_agg import FigureCanvasAgg as FigureCanvas
 from bokeh.io import curdoc
 
 
@@ -84,7 +81,7 @@ class Controller:
 
         if self.view.mask_chkbox.value:
             img_src.data.update(image=[img], dh=[img.shape[0]],
-                                dw=[img.shape[1]])  
+                                dw=[img.shape[1]])
         else:
             # Get the mask
             mask = self.model.mask
@@ -211,7 +208,7 @@ class Controller:
         # Set red dot position, display coordinates and update the image
         model.mask, model.mask_min = model.mask_eval(img, quantile_min,
                                                      quantile_max)
-        
+
         # Plot the original img or the masked img depending on the checkbox
         self.toggle_mask()
 
@@ -239,7 +236,7 @@ class Controller:
         # Update the brightness
         self.update_brightness()
         self.update_mask(quantile_min, quantile_max)
-       
+
         view.progress.visible = False
 
     def run(self):
