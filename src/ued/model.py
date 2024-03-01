@@ -3,7 +3,7 @@ import numpy as np
 from bokeh.models import ColumnDataSource
 
 from tifffile import imread
-from reader_dm import DM3
+from .reader_dm import DM3
 
 from skimage.transform import warp_polar
 from scipy.optimize import curve_fit

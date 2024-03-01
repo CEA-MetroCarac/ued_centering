@@ -12,7 +12,7 @@ from bokeh.models import (Div, CustomJS, Button,
                           WheelZoomTool,
                           HoverTool)
 
-from file_browser import FileBrowser
+from .file_browser import FileBrowser
 
 
 class View:

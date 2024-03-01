@@ -12,9 +12,8 @@
 To install and run the app, use the following commands:
 
 ```
-git clone https://github.com/CEA-MetroCarac/ued_centering.git
-cd ued_centering/src/ued
-python ./app.py
+pip install git+https://github.com/CEA-MetroCarac/ued_centering.git
+ued
 ```
 
 ## Requirements

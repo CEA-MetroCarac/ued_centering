@@ -1,0 +1,38 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+name = "ued"
+version = "1.0.0"
+description = "ultrafast electron diffraction image centering"
+authors = ["Killian Pavy <killian.pavy@cea.fr>", "Patrick Quemere <patrick.quemere@cea.fr>", "Matthew Bryan <matthew.bryan@cea.fr>"]
+license = "AGPL-3.0-only"
+readme = "README.md"
+homepage = "https://github.com/CEA-MetroCarac/ued_centering"
+classifiers = [
+    "License :: OSI Approved :: GNU Affero General Public License v3",
+    "Operating System :: OS Independent",
+]
+
+[tool.poetry.scripts]
+ued = 'ued.app:main'
+
+[tool.poetry.dependencies]
+python = "^3.8"
+panel = "*"
+numpy = "*"
+matplotlib = "*"
+scikit-image = "*"
+scipy = "*"
+pandas = "*"
+tifffile = {version = "*", optional = true}
+
+[[tool.poetry.source]]
+name = "ued"
+url = "https://github.com/CEA-MetroCarac/ued"
+priority = "primary"
+
+# [[tool.poetry.source]]
+# name = "PyPI"
+# priority = "primary"
