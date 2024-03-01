@@ -170,7 +170,7 @@ class Model:
 
     def set_pol_imgs(self, img, img_masked, img_bkg_masked, center):
         """
-        Set the polar images and their profiles in the model
+        Set the polar images and their profiles
         """
         # We keep img_pol to plot the polar image without nan values
         img_pol = warp_polar(img, center=center, cval=0)

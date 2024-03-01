@@ -255,9 +255,12 @@ if (!(source.data['listener_added'][0])) {
         # Get the profiles from the model
         prof, prof_bkg, prof_flattened = self.controller.get_profiles()
 
+        self.ax2.clear()
+
         # alt x-axis to plot the profiles so they match the polar image width
         # as they were calculated on downsampled image
-        x = np.linspace(0, self.controller.get_pol_imgs()[0].shape[1], len(prof))
+        x = np.linspace(
+            0, self.controller.get_pol_imgs()[0].shape[1], len(prof))
 
         # Then plot with the new x-axis
         self.ax2.plot(x, prof, visible=False)
@@ -271,6 +274,7 @@ if (!(source.data['listener_added'][0])) {
         # Get flate
         _, _, prof_flattened = self.controller.get_profiles()
 
+        # TODO fix scaling
         # Scale the y-axis to the profile if the extra profiles are hidden
         if not self.show_extra_profiles.value:
             self.original_ylim = self.ax2.get_ylim()
@@ -317,7 +321,7 @@ if (!(source.data['listener_added'][0])) {
         img_masked[mask_min_only] = np.nan  # TODO this shouldn't be in the view
         img_bkg_masked[mask_min_only] = np.nan
 
-        # Set the polar images in the model
+        # Update the polar images and profiles in the model
         self.controller.update_pol_imgs(img, img_masked, img_bkg_masked, (y, x))
 
         self.render_polar_image()
