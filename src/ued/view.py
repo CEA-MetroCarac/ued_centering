@@ -32,14 +32,13 @@ class View:
         # Create a FileBrowser widget
         self.file_browser = FileBrowser()
         self.file_browser_layout = self.file_browser.layout()
-        # TODO load image on selection and center ONLY when the button is clicked
-        #    self.file_browser.df_widget.param.watch(
-        #         self.controller.start, "selection")
+        self.file_browser.df_widget.param.watch(
+                self.controller.start, "selection")
 
         # Create centering button
         self.center_btn = Button(
             label="Centering", button_type="primary")
-        self.center_btn.on_click(controller.start)
+        self.center_btn.on_click(controller.center)
 
         # Getting all ColumnDataSources from model via controller
         img_src = controller.get_img_src()
@@ -58,6 +57,8 @@ class View:
         self.ax2 = self.ax.twinx()
         self.ax2.get_yaxis().set_visible(False)
 
+        # TODO add matplotlib interactive=True when fixed
+        # https://github.com/bokeh/ipywidgets_bokeh/issues/41
         self.polar_plot = pn.pane.Matplotlib(self.fig, tight=True)
         self.polar_imshow = None
 
@@ -74,11 +75,12 @@ class View:
                                     source=img_src,
                                     color_mapper=self.color_mapper)
 
-        self.plot.dot(x="x",
-                      y="y",
-                      size=40,
-                      color="red",
-                      source=dot_src)
+        self.dot = self.plot.dot(x="x",
+                                 y="y",
+                                 size=40,
+                                 color="red",
+                                 source=dot_src,
+                                 visible=False)
 
         # Add a hover tool to display x,y and pixel value
         hover = HoverTool(tooltips=[
@@ -155,7 +157,7 @@ if (!(source.data['listener_added'][0])) {
         # https://github.com/holoviz/panel/issues/5047
         self.x_values = pn.widgets.TextInput(
             name="X Points of interest (confirm with enter)",
-            value="5,10")
+            value="8.2,10.7")
         self.x_values.param.watch(
             lambda event: self.draw_lines_circles(), "value")
 
@@ -178,17 +180,10 @@ if (!(source.data['listener_added'][0])) {
         self.pixel_size_input.param.watch(
             lambda event: controller.apply_px_size(), "value")
 
-        # TODO replace with matplotlib interactive=True when fixed
-        # https://github.com/bokeh/ipywidgets_bokeh/issues/41
-        self.export_png = Button(
-            label="Export to PNG", button_type="primary")
-        self.export_png.on_click(controller.export_plot)
-        self.download = pn.widgets.FileDownload(visible=False)
-
-        self.export_txt = Button(
-            label="Export to TXT", button_type="primary")
-        self.export_txt.on_click(controller.export_profiles)
-        self.download_txt = pn.widgets.FileDownload(visible=False)
+        self.export_csv = Button(
+            label="Export profiles.csv", button_type="primary")
+        self.export_csv.on_click(controller.export_profiles)
+        self.download_csv = pn.widgets.FileDownload(visible=False)
 
         self.cmap_choice = pn.widgets.Select(
             options=['Inferno256', 'Greys256', 'Cividis256', 'Viridis256',
@@ -202,8 +197,8 @@ if (!(source.data['listener_added'][0])) {
         self.mpl_cmap = self.cmap[self.cmap_choice.value]
 
         # add checkbox
-        self.sh_x_val = pn.widgets.Checkbox(name='Show X values', value=True)
-        self.sh_x_val.param.watch(
+        self.hide_x_val = pn.widgets.Checkbox(name='Hide X values', value=False)
+        self.hide_x_val.param.watch(
             lambda event: controller.toggle_lines_and_circles(), "value")
 
         self.show_extra_profiles = pn.widgets.Checkbox(
@@ -217,7 +212,7 @@ if (!(source.data['listener_added'][0])) {
             end=1,
             value=(0.10, 0.95),
             step=0.05)
-        self.quantile_slider.param.watch(lambda event: controller.start(
+        self.quantile_slider.param.watch(lambda event: controller.update_mask(
             quantile_min=self.quantile_slider.value[0],
             quantile_max=self.quantile_slider.value[1]),
                                          "value")
@@ -234,26 +229,18 @@ if (!(source.data['listener_added'][0])) {
         self.brightness_slider.param.watch(
             lambda event: controller.update_brightness(), "value")
 
-        self.mask_chkbox = pn.widgets.Checkbox(name='Show Mask', value=True)
+        self.mask_chkbox = pn.widgets.Checkbox(name='Hide Mask', value=False)
         self.mask_chkbox.param.watch(
             lambda event: controller.toggle_mask(), "value")
 
-    def render_polar_and_profiles(self):
+    def render_polar_image(self):
         """
         Render the polar image while applying effects such as cropping
         the x-axis and setting the pixel size.
         """
         # Get the polar image from the model
         img_pol = self.controller.get_pol_imgs()[0]
-
-        # Get the profiles from the model
-        prof, prof_bkg, prof_flattened = self.controller.get_profiles()
-
-        self.ax.clear()
-        self.ax2.clear()
-
         self.draw_lines_circles()
-
         self.polar_imshow = self.ax.imshow(img_pol,
                                            vmin=0,
                                            vmax=self.controller.get_vmax(),
@@ -261,20 +248,21 @@ if (!(source.data['listener_added'][0])) {
         self.ax.set_aspect('auto')
         self.ax.margins(x=0, y=0)
 
+    def render_profiles(self):
+        """
+        Render the profiles.
+        """
+        # Get the profiles from the model
+        prof, prof_bkg, prof_flattened = self.controller.get_profiles()
+
         # alt x-axis to plot the profiles so they match the polar image width
         # as they were calculated on downsampled image
-        x = np.linspace(0, img_pol.shape[1], len(prof))
+        x = np.linspace(0, self.controller.get_pol_imgs()[0].shape[1], len(prof))
 
         # Then plot with the new x-axis
         self.ax2.plot(x, prof, visible=False)
         self.ax2.plot(x, prof_bkg, color='b', visible=False)
         self.ax2.plot(x, prof_flattened, color='green', visible=False)
-
-        # Set the x-axis limits
-        self.controller.apply_x_offset()
-
-        # Set the pixel size
-        self.controller.apply_px_size()
 
     def show_all_profiles(self):
         """
@@ -332,7 +320,11 @@ if (!(source.data['listener_added'][0])) {
         # Set the polar images in the model
         self.controller.update_pol_imgs(img, img_masked, img_bkg_masked, (y, x))
 
-        self.render_polar_and_profiles()
+        self.render_polar_image()
+        self.render_profiles()
+        self.controller.apply_x_offset() # Set the x-axis limits
+        self.controller.apply_px_size() # Set the pixel size
+
         self.show_all_profiles()
 
         self.controller.callback_id = None
@@ -393,7 +385,7 @@ if (!(source.data['listener_added'][0])) {
         x_values_string = self.x_values.value
         x_values_list = x_values_string.split(",")
         factor = self.pixel_size_input.value
-        x_values = [int(int(x_val.strip()) / factor) for x_val in x_values_list]
+        x_values = [float(x_val.strip()) / factor for x_val in x_values_list]
 
         # Add the circles and the vertical lines of interest
         self.draw_circles(x_values)
@@ -414,14 +406,13 @@ if (!(source.data['listener_added'][0])) {
             pn.Row(self.center_btn,
                    self.progress),
             pn.Spacer(height=20),
-            pn.panel("Load an image and set the center either by clicking on\
-                      the plot or by using the arrow keys."),
+            pn.panel("Select image file and set the mask with the quantile \
+                     slider, finally press Centering."),
             pn.Row(self.coordinates_div),
             pn.Spacer(height=20),
-            pn.Row(self.export_png, self.export_txt),
+            pn.Row(self.export_csv, self.download_csv),
             self.cmap_choice,
-            pn.Row(self.x_values, self.sh_x_val, self.show_extra_profiles),
-            pn.Row(self.download, self.download_txt),
+            pn.Row(self.x_values, self.hide_x_val, self.show_extra_profiles),
             pn.Row(self.x_offset_slider, self.pixel_size_input),
             sizing_mode="fixed")
 

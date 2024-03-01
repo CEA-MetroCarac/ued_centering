@@ -83,35 +83,18 @@ class Controller:
         img_src = self.model.img_src
 
         if self.view.mask_chkbox.value:
+            img_src.data.update(image=[img], dh=[img.shape[0]],
+                                dw=[img.shape[1]])  
+        else:
             # Get the mask
             mask = self.model.mask
             # Update the masked image source
-            masked_img = np.where(mask, img, np.nan)
+            masked_img = np.where(mask, img, np.nan) # TODO should be in model
             img_src.data.update(image=[masked_img], dh=[img.shape[0]],
                                 dw=[img.shape[1]])
-        else:
-            img_src.data.update(image=[img], dh=[img.shape[0]],
-                                dw=[img.shape[1]])
-
-    def export_plot(self):
-        """ Export the polar plot as a PNG image """
-        view = self.view  # for shorter code
-
-        # Convert the plot to a PNG image
-        canvas = FigureCanvas(view.fig)
-        png_output = BytesIO()
-        canvas.print_png(png_output)
-
-        # Reset the pointer to the beginning of the BytesIO object
-        png_output.seek(0)
-
-        view.download.filename = "plot.png"
-        view.download.file = png_output
-
-        view.download._clicks += 1
 
     def export_profiles(self):
-        """ Export the axial sum profile as a TXT file """
+        """ Export the axial sum profile as a csv file """
         view = self.view  # for shorter code
         model = self.model
 
@@ -122,24 +105,24 @@ class Controller:
         )
 
         # save to a StringIO object
-        txt_output = StringIO()
+        csv_output = StringIO()
         np.savetxt(
-            txt_output,
+            csv_output,
             data,
             fmt="%f",
-            delimiter="\t",
-            header="X\t\tY\t\tY_bkg\t\tY_flattened",
+            delimiter=",",
+            header="X,Y,Y_bkg,Y_flattened",
             comments="",
         )
 
         # Reset the pointer to the beginning of the StringIO object
-        txt_output.seek(0)
+        csv_output.seek(0)
 
-        view.download_txt.filename = "profiles.txt"
-        view.download_txt.file = txt_output
+        view.download_csv.filename = "profiles.csv"
+        view.download_csv.file = csv_output
 
         # Trigger the download
-        view.download_txt._clicks += 1
+        view.download_csv._clicks += 1
 
     def update_colormap(self, _):
         """Update the colormap of all the plots"""
@@ -157,7 +140,7 @@ class Controller:
     def toggle_lines_and_circles(self):
         """Show or hide the lines & circles of interest on the polar plot"""
         view = self.view  # for shorter code
-        visible = view.sh_x_val.value
+        visible = not view.hide_x_val.value
 
         for i in range(2, len(view.plot.renderers)):
             view.plot.renderers[i].visible = visible
@@ -209,10 +192,32 @@ class Controller:
             view.polar_imshow.set_clim(vmax=vmax)
             view.polar_plot.param.trigger("object")
 
-    def start(self, quantile_min=0.10, quantile_max=0.95):
+    def center(self):
+        """ Center the red dot on the image """
+        self.view.progress.visible = True
+        self.view.dot.visible = True
+
+        img = self.model.img
+        center, _ = self.model.center_eval(img, self.model.mask)
+        self.model.dot_src.data.update(x=[center[0]], y=[center[1]])
+
+        self.view.progress.visible = False
+
+    def update_mask(self, quantile_min=0.10, quantile_max=0.95):
+        """ Update the mask based on the quantile values """
+        model = self.model
+        img = model.img
+
+        # Set red dot position, display coordinates and update the image
+        model.mask, model.mask_min = model.mask_eval(img, quantile_min,
+                                                     quantile_max)
+        
+        # Plot the original img or the masked img depending on the checkbox
+        self.toggle_mask()
+
+    def start(self, _=None, quantile_min=0.10, quantile_max=0.95):
         """
-        Start the centering process by loading the selected image and setting
-        the red dot position.
+        Load the image and do the mask evaluation
         """
         model = self.model  # for shorter code
         view = self.view
@@ -222,26 +227,20 @@ class Controller:
         file_path = view.file_browser.get_selection_path()
 
         try:
+            # TODO reset the model
+            # from model import Model
+            # self.model = Model(self)
+            # model = self.model
             model.load_img(file_path)
         except ValueError:
             self.view.progress.visible = False
             return
 
-        img = model.img
         # Update the brightness
         self.update_brightness()
-
-        # Set red dot position, display coordinates and update the image
-        model.mask, model.mask_min = model.mask_eval(img, quantile_min,
-                                                     quantile_max)
-        center, _ = model.center_eval(img, model.mask)
-
-        model.dot_src.data.update(x=[center[0]], y=[center[1]])
-        view.coordinates_div.text = f"Coordinates: {center[0]:.0f},\
-                                                   {center[1]:.0f} \n"
-
-        # Plot the original img or the masked img depending on the checkbox
-        self.toggle_mask()
+        self.update_mask(quantile_min, quantile_max)
+       
+        view.progress.visible = False
 
     def run(self):
         """Run the app"""

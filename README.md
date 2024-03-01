@@ -11,7 +11,7 @@
 
 To install and run the app, use the following commands:
 
-```bash
+```
 git clone https://github.com/CEA-MetroCarac/ued_centering.git
 cd ued_centering/src/ued
 python ./app.py
@@ -36,7 +36,7 @@ Here is a brief description of the fields and components of the interface:
 | Left | File selector | Choose the file you want to work with. |
 | Left | Centering button | Start centering with the chosen file. |
 | Left | Coordinates | Displays the coordinates of the center in real time. |
-| Left | Export buttons | One for exporting the Plot to PNG, another for exporting the profiles data to TXT. |
+| Left | Export buttons | One for exporting the Plot to PNG, another for exporting the profiles data to csv. |
 | Left | Colormap selector | A multichoice field to select the colormap to apply on both plots. |
 | Left | Points of interest field | A free text field to set points of interest to show as lines and circles depending on the plot (polar or not). Each point is separated by a comma (e.g., 5,10,15). To update, you can click outside of this field or just press enter. |
 | Left | Points of interest checkbox | Show or hide these points of interest. |
