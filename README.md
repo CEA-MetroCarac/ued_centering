@@ -13,7 +13,7 @@ To install and run the app, use the following commands:
 
 ```
 pip install git+https://github.com/CEA-MetroCarac/ued_centering.git
-ued
+ued_centering
 ```
 
 ## Requirements
