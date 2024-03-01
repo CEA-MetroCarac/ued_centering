@@ -220,7 +220,12 @@ class Controller:
 
         # Load the image
         file_path = view.file_browser.get_selection_path()
-        model.load_img(file_path)
+
+        try:
+            model.load_img(file_path)
+        except ValueError:
+            self.view.progress.visible = False
+            return
 
         img = model.img
         # Update the brightness

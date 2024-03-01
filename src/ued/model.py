@@ -108,7 +108,7 @@ class Model:
         mask: numpy.ndarray((img.shape), dtype=bool)
             Mask associated to the array given in input
         """
-        mask_min = (img > np.nanquantile(img, quantile_min))
+        mask_min = img > np.nanquantile(img, quantile_min)
         mask = mask_min * (img < np.nanquantile(img, quantile_max))
         mask = binary_closing(mask)
         return mask, ~mask_min

@@ -29,10 +29,12 @@ class View:
         # In case of error, display an alert
         self.alert = pn.pane.Alert('', alert_type='danger', visible=False)
 
-        # Create a FileBrowser widget with a custom css class
+        # Create a FileBrowser widget
         self.file_browser = FileBrowser()
         self.file_browser_layout = self.file_browser.layout()
-        self.file_browser_layout.css_classes = ["file_browser"]
+        # TODO load image on selection and center ONLY when the button is clicked
+        #    self.file_browser.df_widget.param.watch(
+        #         self.controller.start, "selection")
 
         # Create centering button
         self.center_btn = Button(
