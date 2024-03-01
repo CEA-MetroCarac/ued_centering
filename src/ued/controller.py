@@ -1,6 +1,5 @@
 """ Controller module for the UED centering app """
-import tempfile
-from io import BytesIO
+from io import BytesIO, StringIO
 
 import numpy as np
 import panel as pn
@@ -120,14 +119,15 @@ class Controller:
         factor = view.pixel_size_input.value
         data = np.column_stack((x * factor, model.prof))
 
-        # save to a temp file using tempfile
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".txt") as fid:
-            np.savetxt(fid, data, fmt='%f', delimiter='\t', header='X\t\tY')
+        # save to a StringIO object
+        txt_output = StringIO()
+        np.savetxt(txt_output, data, fmt='%f', delimiter='\t', header='X\t\tY')
 
-        view.download_txt.file = fid.name
-        view.download_txt.filename = "profile.txt"
+        # Reset the pointer to the beginning of the StringIO object
+        txt_output.seek(0)
 
-        view.download_txt.file = fid.name
+        view.download_txt.filename = "profiles.txt"
+        view.download_txt.file = txt_output
 
         # Trigger the download
         view.download_txt._clicks += 1
