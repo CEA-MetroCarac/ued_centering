@@ -172,6 +172,10 @@ class Model:
         """
         Set the polar images and their profiles
         """
+        # Create the polar warp of the image
+        img_masked[self.mask_min] = np.nan
+        img_bkg_masked[self.mask_min] = np.nan
+
         # We keep img_pol to plot the polar image without nan values
         img_pol = warp_polar(img, center=center, cval=0)
         img_pol_masked = warp_polar(img_masked, center=center, cval=np.nan)

@@ -311,15 +311,9 @@ if (!(source.data['listener_added'][0])) {
         # Auto set pixel_size if its value has been defined when loading img
         self.controller.apply_px_size(init=True)
 
-        # Create the polar warp of the image
-        mask_min_only = self.controller.get_mask_min()
-
         # Copy of the image and the background to apply the mask
         img_masked = img.copy()
         img_bkg_masked = self.controller.get_img_bkg().copy()
-
-        img_masked[mask_min_only] = np.nan  # TODO this shouldn't be in the view
-        img_bkg_masked[mask_min_only] = np.nan
 
         # Update the polar images and profiles in the model
         self.controller.update_pol_imgs(img, img_masked, img_bkg_masked, (y, x))
