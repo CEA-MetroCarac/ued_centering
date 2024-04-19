@@ -3,7 +3,7 @@ from io import StringIO
 import numpy as np
 import panel as pn
 from bokeh.io import curdoc
-
+import socket
 
 class Controller:
     """ Controller class for the UED centering app """
@@ -241,4 +241,12 @@ class Controller:
 
     def run(self):
         """Run the app"""
-        pn.serve(self.view.layout(), port=5006)
+
+        # Getting a free port
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.bind(('', 0))  # Bind to a port that is free
+        port = sock.getsockname()[1]
+        sock.close()
+
+        # Serve the app
+        pn.serve(self.view.layout(), port=port)

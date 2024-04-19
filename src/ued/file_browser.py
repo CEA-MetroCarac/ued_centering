@@ -160,7 +160,7 @@ class FileBrowser:
             hidden_columns=['Extension', 'Hidden'],
             text_align={k: 'right' for k in self.df.columns if k != 'Type'},
             selectable=1,
-            height=200,
+            height=350,
             widths={
                 'Type': '8%',
                 'Name': '50%',
@@ -176,13 +176,13 @@ class FileBrowser:
             value=str(self.current_dir),
             sizing_mode='stretch_width'
         )
-        self.filter_pattern_input = pn.widgets.TextInput(
-            name='Filter (press enter or click away to run):',
-            value='',
-            placeholder='Filename filter, case-insensitive, regex accepted',
-            sizing_mode='stretch_width',
-            height=60,
-        )
+        # self.filter_pattern_input = pn.widgets.TextInput(
+        #     name='Filter (press enter or click away to run):',
+        #     value='',
+        #     placeholder='Filename filter, case-insensitive, regex accepted',
+        #     sizing_mode='stretch_width',
+        #     height=60,
+        # )
 
         button_params = {
             'button_type': 'primary',
@@ -195,26 +195,26 @@ class FileBrowser:
         self.back_button = pn.widgets.Button(name='🡄', **button_params)
         self.up_button = pn.widgets.Button(name='🡅', **button_params)
         self.refresh_button = pn.widgets.Button(name='⭮', **button_params)
-        self.filter_folders_cbox = pn.widgets.Checkbox(
-            name='Filter folders',
-            value=False,
-            width_policy='min',
-            align='center',
-        )
-        self.show_hidden_cbox = pn.widgets.Checkbox(
-            name='Show hidden',
-            value=True,
-            width_policy='min',
-            align='center',
-        )
+        # self.filter_folders_cbox = pn.widgets.Checkbox(
+        #     name='Filter folders',
+        #     value=False,
+        #     width_policy='min',
+        #     align='center',
+        # )
+        # self.show_hidden_cbox = pn.widgets.Checkbox(
+        #     name='Show hidden',
+        #     value=True,
+        #     width_policy='min',
+        #     align='center',
+        # )
 
-        self.df_widget.add_filter(
-            pn.bind(
-                filter_by_regex,
-                pattern=self.filter_pattern_input,
-                filter_folders=self.filter_folders_cbox,
-            )
-        )
+        # self.df_widget.add_filter(
+        #     pn.bind(
+        #         filter_by_regex,
+        #         pattern=self.filter_pattern_input,
+        #         filter_folders=self.filter_folders_cbox,
+        #     )
+        # )
 
         def handle_up(event):
             self.update_widgets(self.current_dir / '..')
@@ -240,19 +240,19 @@ class FileBrowser:
 
         self.back_button.on_click(handle_back)
 
-        self.extension_filter = pn.widgets.MultiChoice(
-            name='Filter extension:',
-            options=self.optional_filters,
-            min_height=55,
-        )
-        self.df_widget.add_filter(
-            pn.bind(
-                filter_by_choice,
-                extensions=self.extension_filter,
-                filter_folders=self.filter_folders_cbox,
-                show_hidden=self.show_hidden_cbox,
-            )
-        )
+        # self.extension_filter = pn.widgets.MultiChoice(
+        #     name='Filter extension:',
+        #     options=self.optional_filters,
+        #     min_height=55,
+        # )
+        # self.df_widget.add_filter(
+        #     pn.bind(
+        #         filter_by_choice,
+        #         extensions=self.extension_filter,
+        #         filter_folders=self.filter_folders_cbox,
+        #         show_hidden=self.show_hidden_cbox,
+        #     )
+        # )
 
         self._layout = pn.Column(
             pn.Row(
@@ -262,15 +262,15 @@ class FileBrowser:
                 self.current_address_input,
                 self.refresh_button
             ),
-            pn.Row(
-                self.filter_pattern_input,
-                pn.Column(
-                    self.filter_folders_cbox,
-                    self.show_hidden_cbox,
-                    align='center',
-                ),
-                self.extension_filter,
-            ),
+            # pn.Row(
+            #     self.filter_pattern_input,
+            #     pn.Column(
+            #         self.filter_folders_cbox,
+            #         self.show_hidden_cbox,
+            #         align='center',
+            #     ),
+            #     self.extension_filter,
+            # ),
             self.df_widget,
         )
         return self._layout
