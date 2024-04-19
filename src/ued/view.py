@@ -244,7 +244,8 @@ if (!(source.data['listener_added'][0])) {
         self.polar_imshow = self.ax.imshow(img_pol,
                                            vmin=0,
                                            vmax=self.controller.get_vmax(),
-                                           cmap=self.mpl_cmap)
+                                           cmap=self.mpl_cmap,
+                                           origin='lower')
         self.ax.set_aspect('auto')
         self.ax.margins(x=0, y=0)
 
