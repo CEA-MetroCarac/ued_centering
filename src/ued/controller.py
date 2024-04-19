@@ -1,9 +1,10 @@
 """ Controller module for the UED centering app """
 from io import StringIO
+import socket
 import numpy as np
 import panel as pn
 from bokeh.io import curdoc
-import socket
+from matplotlib.ticker import FuncFormatter
 
 class Controller:
     """ Controller class for the UED centering app """
@@ -171,11 +172,15 @@ class Controller:
 
         # Apply the factor to the ticks
         x_ticks = (x_ticks * factor).astype(int)
+        def format_func(value, tick_number):
+            return "%.2f" % (value * factor)
 
-        # Set new tick labels
-        view.ax.set_xticklabels(x_ticks)
+        # Set new tick labels with 2 decimal places
+        view.ax.xaxis.set_major_formatter(FuncFormatter(format_func))
+        
         # Update lines and circles position according to the new pixel size
         view.draw_lines_circles()
+
         # Update the Matplotlib pane
         view.polar_plot.param.trigger("object")
 

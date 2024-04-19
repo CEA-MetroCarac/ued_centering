@@ -172,7 +172,7 @@ if (!(source.data['listener_added'][0])) {
 
         self.pixel_size_input = pn.widgets.FloatInput(
             name="Pixel Size Factor",
-            start=0,
+            start=0.001,
             end=100,
             value=1,
             format='0.000',
