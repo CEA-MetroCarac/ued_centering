@@ -75,12 +75,13 @@ class View:
                                     source=img_src,
                                     color_mapper=self.color_mapper)
 
-        self.dot = self.plot.dot(x="x",
-                                 y="y",
-                                 size=40,
-                                 color="red",
-                                 source=dot_src,
-                                 visible=False)
+        self.dot = self.plot.scatter(marker="dot",
+                                     x="x",
+                                     y="y",
+                                     size=40,
+                                     color="red",
+                                     source=dot_src,
+                                     visible=False)
 
         # Add a hover tool to display x,y and pixel value
         hover = HoverTool(tooltips=[
@@ -382,9 +383,14 @@ if (!(source.data['listener_added'][0])) {
         """ Draw the lines and circles of interest on the plots """
         # Get the x-values from the text input
         x_values_string = self.x_values.value
-        x_values_list = x_values_string.split(",")
         factor = self.pixel_size_input.value
-        x_values = [float(x_val.strip()) / factor for x_val in x_values_list]
+
+        # If the string is empty, set x_values to [0]
+        if x_values_string.strip() == '':
+            x_values = [0]
+        else:
+            x_values_list = x_values_string.split(",")
+            x_values = [float(x_val.strip()) / factor for x_val in x_values_list]
 
         # Add the circles and the vertical lines of interest
         self.draw_circles(x_values)
