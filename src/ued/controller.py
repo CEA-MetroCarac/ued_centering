@@ -165,13 +165,7 @@ class Controller:
             return
 
         factor = view.pixel_size_input.value  # Get the pixel size factor
-        x_ticks = view.ax.get_xticks()  # Get current x and y ticks
-
-        # TODO Fix warning, this adds a wider blank border to the plot
-        # view.ax.set_xticks(x_ticks)
-
-        # Apply the factor to the ticks
-        x_ticks = (x_ticks * factor).astype(int)
+        
         def format_func(value, tick_number):
             return "%.2f" % (value * factor)
 
