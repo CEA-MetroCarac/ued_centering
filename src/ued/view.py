@@ -49,6 +49,7 @@ class View:
                            y_range=DataRange1d(range_padding=0),
                            width=500,
                            height=500)
+        self.plot.xaxis.axis_label = "Pixels (px)"
         self.plot.toolbar.active_scroll = self.plot.select_one(WheelZoomTool)
         # Limit the range of the plot to just the data
         self.plot.x_range.bounds = self.plot.y_range.bounds = "auto"
